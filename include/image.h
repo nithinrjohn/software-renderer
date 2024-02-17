@@ -39,6 +39,10 @@ struct Color {
     uint8_t red = 0;
     uint8_t green = 0;
     uint8_t blue = 0;
+
+	Color operator*(const float& f) const {
+		return Color{(uint8_t) (red * f), (uint8_t) (green * f), (uint8_t) (blue * f)};
+	}
 };
 #pragma pack(pop)
 
@@ -51,10 +55,13 @@ class Image {
 	    BitmapInfoHeader infoHeader;
         vector<vector<Color>> pixels;
 
-		void drawLineLow(int x0, int y0, int x1, int y1, Color color);;
-		void drawLineHigh(int x0, int y0, int x1, int y1, Color color);
-		void drawLineBresenham(int x0, int y0, int x1, int y1, Color color);
-		void drawLineSimple(int x0, int y0, int x1, int y1, Color color);
+		void drawLineLow(vector<Vec2i> points, Color color);
+		void drawLineHigh(vector<Vec2i> points, Color color);
+		void drawLineBresenham(vector<Vec2i> points, Color color);
+		void drawLineSimple(vector<Vec2i> points, Color color);
+
+		vector<Vec2i> boundingBox(Color color, vector<Vec3f> tri);
+		void rasterizeTriangle(Color color, vector<Vec3f> tri, vector<vector<float>>& zbuffer);
     public:
         Image(string filename);
         Image(int width, int height);
@@ -68,8 +75,9 @@ class Image {
 		int getHeight();
 
 		void clear(Color color);
-		void set(int x, int y, Color color);
-		void drawLine(int x0, int y0, int x1, int y1, Color color, string algorithm="bresenham");
-		void drawTriangle(Vec2i v0, Vec2i v1, Vec2i v2, Color color);
-		void drawTriangle(vector<Vec2i>, Color color);
+		void set(int y, int x, Color color);
+		void flip(bool x, bool y);
+
+		void drawLine(vector<Vec2i> points, Color color, string algorithm="bresenham");
+		void drawTriangle(vector<Vec3f>, Color color, vector<vector<float>>& zbuffer, bool fill = true, bool wireframe=false);
 };

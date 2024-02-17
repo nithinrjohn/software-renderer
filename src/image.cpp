@@ -75,6 +75,8 @@ bool Image::open(string filename) {
 }
 
 bool Image::write(string filename) {
+	this->flip(false, true);
+
     ofstream file;
     file.open(filename, ios::binary);
     if(!file.is_open()) {
@@ -125,7 +127,33 @@ void Image::set(int y, int x, Color color) {
     this->pixels[y][x] = color;
 }
 
-void Image::drawLineLow(int x0, int y0, int x1, int y1, Color color) {
+void Image::flip(bool x, bool y) {
+	if(x) {
+		for(int y = 0; y < this->height / 2; y++) {
+			for(int x = 0; x < this->width; x++) {
+				Color temp = this->pixels[y][x];
+				this->pixels[y][x] = this->pixels[this->height - y - 1][x];
+				this->pixels[this->height - y - 1][x] = temp;
+			}
+		}
+	}
+	if(y) {
+		for(int y = 0; y < this->height; y++) {
+			for(int x = 0; x < this->width / 2; x++) {
+				Color temp = this->pixels[y][x];
+				this->pixels[y][x] = this->pixels[y][this->width - x - 1];
+				this->pixels[y][this->width - x - 1] = temp;
+			}
+		}
+	}
+}
+
+void Image::drawLineLow(vector<Vec2i> points, Color color) {
+	int x0 = points[0].x;
+	int y0 = points[0].y;
+	int x1 = points[1].x;
+	int y1 = points[1].y;
+
 	int dx = x1 - x0;
 	int dy = y1 - y0;
 
@@ -150,7 +178,12 @@ void Image::drawLineLow(int x0, int y0, int x1, int y1, Color color) {
 	}
 }
 
-void Image::drawLineHigh(int x0, int y0, int x1, int y1, Color color) {
+void Image::drawLineHigh(vector<Vec2i> points, Color color) {
+	int x0 = points[0].x;
+	int y0 = points[0].y;
+	int x1 = points[1].x;
+	int y1 = points[1].y;
+
 	int dx = x1 - x0;
 	int dy = y1 - y0;
 
@@ -175,31 +208,41 @@ void Image::drawLineHigh(int x0, int y0, int x1, int y1, Color color) {
 	}
 }
 
-void Image::drawLineBresenham(int x0, int y0, int x1, int y1, Color color) {
+void Image::drawLineBresenham(vector<Vec2i> points, Color color) {
+	int x0 = points[0].x;
+	int y0 = points[0].y;
+	int x1 = points[1].x;
+	int y1 = points[1].y;
+
 	int dx = x1 - x0;
 	int dy = y1 - y0;
 
 	if(abs(dx) > abs(dy)) {
 		//slope is less than 1
 		if(x0 > x1) {
-			drawLineLow(x1, y1, x0, y0, color);
+			drawLineLow(points, color);
 		}
 		else {
-			drawLineLow(x0, y0, x1, y1, color);
+			drawLineLow(points, color);
 		}
 	}
 	else {
 		//slope is greater than 1
 		if(y0 > y1) {
-			drawLineHigh(x1, y1, x0, y0, color);
+			drawLineHigh(points, color);
 		}
 		else {
-			drawLineHigh(x0, y0, x1, y1, color);
+			drawLineHigh(points, color);
 		}
 	}
 }
 
-void Image::drawLineSimple(int x0, int y0, int x1, int y1, Color color) {
+void Image::drawLineSimple(vector<Vec2i> points, Color color) {
+	int x0 = points[0].x;
+	int y0 = points[0].y;
+	int x1 = points[1].x;
+	int y1 = points[1].y;
+
 	int dx = x1 - x0;
 	int dy = y1 - y0;
 
@@ -216,17 +259,6 @@ void Image::drawLineSimple(int x0, int y0, int x1, int y1, Color color) {
 
 		for(int x = x0; x <= x1; x++) {
 			int y = m * x + b;
-			// cout << "x: " << x << " y: " << y << endl;
-			// if(x < 0 || x > width)
-			// {
-			// 	cout << "x out of bounds" << endl;
-			// 	cout << "slope: less than one" << m << endl;
-			// }
-			// if(y < 0 || y > height)
-			// {
-			// 	cout << "y out of bounds" << endl;
-			// 	cout << "slope: less than one" << m << endl;
-			// }
 			set(y, x, color);
 		}
 	} 
@@ -237,39 +269,63 @@ void Image::drawLineSimple(int x0, int y0, int x1, int y1, Color color) {
 
 		for(int y = y0; y <= y1; y++) {
 			int x = m * y + b;
-			// cout << "x: " << x << " y: " << y << endl;
-			// if(x < 0 || x > width)
-			// {
-			// 	cout << "x out of bounds" << endl;
-			// 	cout << "slope: greater than one" << m << endl;
-			// }
-			// if(y < 0 || y > height)
-			// {
-			// 	cout << "y out of bounds" << endl;
-			// 	cout << "slope: greater than one" << m << endl;
-			// }
 			set(y, x, color);
 		}
 	}
 }
 
-void Image::drawLine(int x0, int y0, int x1, int y1, Color color, string algorithm) {
+void Image::drawLine(vector<Vec2i> points, Color color, string algorithm) {
 	if(algorithm == "bresenham") {
-		drawLineBresenham(x0, y0, x1, y1, color);
+		drawLineBresenham(points, color);
 	}
 	else if(algorithm == "simple") {
-		drawLineSimple(x0, y0, x1, y1, color);
+		drawLineSimple(points, color);
 	}
 }
 
-void Image::drawTriangle(Vec2i v0, Vec2i v1, Vec2i v2, Color color) {
-	drawLine(v0.x, v0.y, v1.x, v1.y, color);
-	drawLine(v1.x, v1.y, v2.x, v2.y, color);
-	drawLine(v2.x, v2.y, v0.x, v0.y, color);
+vector<Vec2i> Image::boundingBox(Color color, vector<Vec3f> tri) {
+	int minX = min(tri[0].x, min(tri[1].x, tri[2].x));
+	int minY = min(tri[0].y, min(tri[1].y, tri[2].y));
+	int maxX = max(tri[0].x, max(tri[1].x, tri[2].x));
+	int maxY = max(tri[0].y, max(tri[1].y, tri[2].y));
+
+	vector<Vec2i> box = { {minX, minY}, {maxX, minY}, {maxX, maxY}, {minX, maxY} };
+
+	return box;
 }
 
-void Image::drawTriangle(vector<Vec2i> vertices, Color color) {
-	drawLine(vertices[0].x, vertices[0].y, vertices[1].x, vertices[1].y, color);
-	drawLine(vertices[1].x, vertices[1].y, vertices[2].x, vertices[2].y, color);
-	drawLine(vertices[2].x, vertices[2].y, vertices[0].x, vertices[0].y, color);
+void Image::rasterizeTriangle(Color color, vector<Vec3f> tri, vector<vector<float>>& zbuffer) {
+	vector<Vec2i> box = boundingBox(color, tri);
+
+	Vec3f p;
+	for(p.y = box[0].y; p.y <= box[3].y; p.y++) {
+		for(p.x = box[0].x; p.x <= box[1].x; p.x++) {
+			Vec3f barycentric = barycentricCoords(tri, p);
+			if(barycentric.x < 0 || barycentric.y < 0 || barycentric.z < 0) continue;
+			p.z = 0;
+
+			p.z = tri[0].z * barycentric.x + tri[1].z * barycentric.y + tri[2].z * barycentric.z;
+
+			if(p.z < zbuffer[p.x][p.y]) {
+				zbuffer[p.x][p.y] = p.z;
+				//Color zColor = {static_cast<unsigned char>(p.z * 255), static_cast<unsigned char>(p.z * 255), static_cast<unsigned char>(p.z * 255)};
+				set(p.y, p.x, color);
+			}
+		}
+	}
+}
+
+void Image::drawTriangle(vector<Vec3f> vertices, Color color, vector<vector<float>>& zbuffer, bool fill, bool wireframe) {
+	if(wireframe) {
+		vector<Vec2i> line1({ {static_cast<int>(vertices[0].x), static_cast<int>(vertices[0].y)}, {static_cast<int>(vertices[1].x), static_cast<int>(vertices[1].y)} });
+		vector<Vec2i> line2({ {static_cast<int>(vertices[1].x), static_cast<int>(vertices[1].y)}, {static_cast<int>(vertices[2].x), static_cast<int>(vertices[2].y)} });
+		vector<Vec2i> line3({ {static_cast<int>(vertices[2].x), static_cast<int>(vertices[2].y)}, {static_cast<int>(vertices[0].x), static_cast<int>(vertices[0].y)} });
+
+		drawLine(line1, color);
+		drawLine(line2, color);
+		drawLine(line3, color);
+	}
+	if(fill) {
+		rasterizeTriangle(color, vertices, zbuffer);
+	}
 }

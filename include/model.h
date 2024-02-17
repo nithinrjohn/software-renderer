@@ -14,7 +14,7 @@ class Model {
         vector<vector<int>> faces;
     public:
         Model(string filename);
-        Model(string filename, Image &image, Color color, string algorithm = "bresenham");
+        Model(string filename, Image &image, Color color, bool fill = true, bool wireframe = false, string algorithm = "bresenham");
         ~Model();
 
         bool open(string filename);
@@ -25,5 +25,5 @@ class Model {
         Vec3f vert(int i);
         vector<int> face(int i);
 
-        bool draw(Image &image, Color color, string algorithm = "bresenham");
+        bool draw(Image &image, Color color, bool fill = true, bool wireframe = false, string algorithm = "bresenham");
 };
