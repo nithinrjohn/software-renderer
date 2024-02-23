@@ -12,11 +12,18 @@ using namespace std;
 const int WIDTH = 800;
 const int HEIGHT = 800;
 
+string name = "";
+
 int main() {
 
-	Image image(WIDTH, HEIGHT, BackgroundColor2);
+	cout << "Enter the name of the model: ";
+	cin >> name;
 
-	Model model("../resources/models/link.obj", image, ZeldaGreen, true, false);
+	Image texture("../resources/textures/" + name + ".bmp");
+
+	Image image(WIDTH, HEIGHT, BackgroundColor1);
+
+	Model model("../resources/models/" + name + ".obj", image, black, texture);
 
 	cout << "nverts: " << model.nverts() << endl;
 	cout << "nfaces: " << model.nfaces() << endl;

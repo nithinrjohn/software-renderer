@@ -60,8 +60,8 @@ class Image {
 		void drawLineBresenham(vector<Vec2i> points, Color color);
 		void drawLineSimple(vector<Vec2i> points, Color color);
 
-		vector<Vec2i> boundingBox(Color color, vector<Vec3f> tri);
-		void rasterizeTriangle(Color color, vector<Vec3f> tri, vector<vector<float>>& zbuffer);
+		vector<Vec2i> boundingBox(vector<Vec3f> tri);
+		void rasterizeTriangle(float lightIntensity, vector<Vec3f> tri, vector<vector<float>>& zbuffer, vector<Vec2f>& triTexture, Image* texture);
     public:
         Image(string filename);
         Image(int width, int height);
@@ -76,8 +76,9 @@ class Image {
 
 		void clear(Color color);
 		void set(int y, int x, Color color);
+		Color get(int y, int x);
 		void flip(bool x, bool y);
 
 		void drawLine(vector<Vec2i> points, Color color, string algorithm="bresenham");
-		void drawTriangle(vector<Vec3f>, Color color, vector<vector<float>>& zbuffer, bool fill = true, bool wireframe=false);
+		void drawTriangle(vector<Vec3f>, float lightIntensity, vector<vector<float>>& zbuffer, vector<Vec2f>& triTexture,  Image* texture, bool fill = true, bool wireframe=false);
 };

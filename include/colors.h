@@ -14,7 +14,3 @@ const Color BackgroundColor2 = {92, 81, 116};
 const Color BackgroundColor3 = {102, 102, 154};
 const Color BackgroundColor4 = {170, 167, 204};
 const Color BackgroundColor5 = {190, 159, 191};
-
-//Special Colors
-const Color BlenderOrange = {246, 148, 85};
-const Color ZeldaGreen = {47, 151, 76};

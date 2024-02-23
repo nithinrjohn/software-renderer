@@ -17,7 +17,7 @@ _deps
 *.slo
 *.lo
 *.o
-#*.obj
+*.obj
 
 # Precompiled Headers
 *.gch
@@ -45,5 +45,6 @@ _deps
 
 build/
 bin/
-resources/tests/
+resources/
+examples/bmp
 .vscode/

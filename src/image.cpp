@@ -69,6 +69,8 @@ bool Image::open(string filename) {
         file.read((char *) padding, paddingSize);
     }
 
+	//this->flip(false, true);
+
     file.close();
 
     return true;
@@ -125,6 +127,10 @@ void Image::clear(Color color) {
 
 void Image::set(int y, int x, Color color) {
     this->pixels[y][x] = color;
+}
+
+Color Image::get(int y, int x) {
+	return this->pixels[y][x];
 }
 
 void Image::flip(bool x, bool y) {
@@ -283,7 +289,7 @@ void Image::drawLine(vector<Vec2i> points, Color color, string algorithm) {
 	}
 }
 
-vector<Vec2i> Image::boundingBox(Color color, vector<Vec3f> tri) {
+vector<Vec2i> Image::boundingBox(vector<Vec3f> tri) {
 	int minX = min(tri[0].x, min(tri[1].x, tri[2].x));
 	int minY = min(tri[0].y, min(tri[1].y, tri[2].y));
 	int maxX = max(tri[0].x, max(tri[1].x, tri[2].x));
@@ -294,10 +300,11 @@ vector<Vec2i> Image::boundingBox(Color color, vector<Vec3f> tri) {
 	return box;
 }
 
-void Image::rasterizeTriangle(Color color, vector<Vec3f> tri, vector<vector<float>>& zbuffer) {
-	vector<Vec2i> box = boundingBox(color, tri);
+void Image::rasterizeTriangle(float lightIntensity, vector<Vec3f> tri, vector<vector<float>>& zbuffer, vector<Vec2f>& triTexture, Image* texture) {
+	vector<Vec2i> box = boundingBox(tri);
 
 	Vec3f p;
+	Vec2f uv;
 	for(p.y = box[0].y; p.y <= box[3].y; p.y++) {
 		for(p.x = box[0].x; p.x <= box[1].x; p.x++) {
 			Vec3f barycentric = barycentricCoords(tri, p);
@@ -305,27 +312,29 @@ void Image::rasterizeTriangle(Color color, vector<Vec3f> tri, vector<vector<floa
 			p.z = 0;
 
 			p.z = tri[0].z * barycentric.x + tri[1].z * barycentric.y + tri[2].z * barycentric.z;
+			
+			uv = triTexture[0] * barycentric.x + triTexture[1] * barycentric.y + triTexture[2] * barycentric.z;
+			
+			Vec2i pixelUV = Vec2i{static_cast<int>(uv.x * texture->getWidth()), static_cast<int>(uv.y * texture->getHeight())};
+
+			Color textureColor = texture->get(pixelUV.y % texture->getHeight(), pixelUV.x % texture->getWidth());
+
+			Color lightColor = textureColor * lightIntensity;
 
 			if(p.z < zbuffer[p.x][p.y]) {
 				zbuffer[p.x][p.y] = p.z;
-				//Color zColor = {static_cast<unsigned char>(p.z * 255), static_cast<unsigned char>(p.z * 255), static_cast<unsigned char>(p.z * 255)};
-				set(p.y, p.x, color);
+				Color zColor = {static_cast<unsigned char>(p.z * 255), static_cast<unsigned char>(p.z * 255), static_cast<unsigned char>(p.z * 255)};
+				set(p.y, p.x, lightColor);
 			}
 		}
 	}
 }
 
-void Image::drawTriangle(vector<Vec3f> vertices, Color color, vector<vector<float>>& zbuffer, bool fill, bool wireframe) {
+void Image::drawTriangle(vector<Vec3f> vertices, float lightIntensity, vector<vector<float>>& zbuffer, vector<Vec2f>& triTexture, Image* texture, bool fill, bool wireframe) {
 	if(wireframe) {
-		vector<Vec2i> line1({ {static_cast<int>(vertices[0].x), static_cast<int>(vertices[0].y)}, {static_cast<int>(vertices[1].x), static_cast<int>(vertices[1].y)} });
-		vector<Vec2i> line2({ {static_cast<int>(vertices[1].x), static_cast<int>(vertices[1].y)}, {static_cast<int>(vertices[2].x), static_cast<int>(vertices[2].y)} });
-		vector<Vec2i> line3({ {static_cast<int>(vertices[2].x), static_cast<int>(vertices[2].y)}, {static_cast<int>(vertices[0].x), static_cast<int>(vertices[0].y)} });
-
-		drawLine(line1, color);
-		drawLine(line2, color);
-		drawLine(line3, color);
+		//drawLine({{vertices[0].x, vertices[0].y}, {vertices[1].x, vertices[1].y}}, white);
 	}
 	if(fill) {
-		rasterizeTriangle(color, vertices, zbuffer);
+		rasterizeTriangle(lightIntensity, vertices, zbuffer, triTexture, texture);
 	}
 }

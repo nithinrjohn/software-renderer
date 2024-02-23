@@ -12,9 +12,9 @@ Model::Model(string filename) {
     open(filename);
 }
 
-Model::Model(string filename, Image &image, Color color, bool fill, bool wireframe, string algorithm) {
+Model::Model(string filename, Image &image, Color color, Image& texture, bool fill, bool wireframe, string algorithm) {
     open(filename);
-    draw(image, color, fill, wireframe, algorithm);
+    draw(image, color, texture, fill, wireframe, algorithm);
 }
 
 Model::~Model() {}
@@ -39,12 +39,20 @@ bool Model::open(string filename) {
             ss >> v.x >> v.y >> v.z;
             this->verts.push_back(v);
         }
+        else if (type == "vt")
+        {
+            Vec2f vt;
+            ss >> vt.x >> vt.y;
+            this->vertTextures.push_back(vt);
+        }
         else if(type == "f") {
             vector<int> f;
+            vector<int> t;
             char slash;
             int vertex, textureCoord, normal;
             while(ss >> vertex >> slash >> textureCoord >> slash >> normal) {
                 f.push_back(vertex - 1); // -1 because obj files start at 1
+                t.push_back(textureCoord - 1);
             }
             
             // for(int i = 0; i < f.size(); i++) {
@@ -53,6 +61,10 @@ bool Model::open(string filename) {
             // cout << endl;
 
             this->faces.push_back(f);
+            this->textureCoords.push_back(t);
+
+            // cout << ss.str() << endl;
+            // cout << "textureCoords: " << t[0] << " " << t[1] << " " << t[2] << endl;
         }
     }
 
@@ -77,7 +89,15 @@ vector<int> Model::face(int i) {
     return this->faces[i];
 }
 
-bool Model::draw(Image &image, Color color, bool fill, bool wireframe, string algorithm) {
+Vec2f Model::vertTexture(int i) {
+    return this->vertTextures[i];
+}
+
+vector<int> Model::textureCoord(int i) {
+    return this->textureCoords[i];
+}
+
+bool Model::draw(Image &image, Color color, Image& texture, bool fill, bool wireframe, string algorithm) {
     int width = image.getWidth();
     int height = image.getHeight();
 
@@ -85,6 +105,10 @@ bool Model::draw(Image &image, Color color, bool fill, bool wireframe, string al
     
     for(int i = 0; i < this->nfaces(); i++) {
         vector<int> face = this->face(i);
+        vector<int> textureCoord = this->textureCoord(i);
+
+        //cout << "Face " << i << ": " << face[0] << " " << face[1] << " " << face[2] << endl;
+        //cout << "TextureCoord " << i << ": " << textureCoord[0] << " " << textureCoord[1] << " " << textureCoord[2] << endl;
 
         if(face.size() != 3) {
             cout << "Error: Face " << i << " does not have 3 vertices." << endl;
@@ -101,6 +125,14 @@ bool Model::draw(Image &image, Color color, bool fill, bool wireframe, string al
 
         vector<Vec3f> tri = {pixel0, pixel1, pixel2};
 
+        Vec2f vt0 = this->vertTexture(textureCoord[0]); //obtain vertex textures
+        Vec2f vt1 = this->vertTexture(textureCoord[1]);
+        Vec2f vt2 = this->vertTexture(textureCoord[2]);
+
+        vector<Vec2f> triTexture = {vt0, vt1, vt2};
+
+        //cout << "TriTexture: " << triTexture[0].x << " " << triTexture[0].y << endl;
+
         //randomize color
         //Color randColor = {rand() % 255, rand() % 255, rand() % 255};
         //color = randColor;
@@ -112,11 +144,8 @@ bool Model::draw(Image &image, Color color, bool fill, bool wireframe, string al
 
         float intensity =  dot(normal, light);
 
-        Color white = {255, 255, 255};
-        Color lightColor = color * intensity;
-
         if(intensity > 0) {
-             image.drawTriangle(tri, lightColor, zbuffer, fill, wireframe);
+             image.drawTriangle(tri, intensity, zbuffer, triTexture, &texture, fill, wireframe);
         }
 
         //image.drawTriangle(tri, lightColor, zbuffer, false, true);
