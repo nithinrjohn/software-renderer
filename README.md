@@ -1,13 +1,13 @@
 # Software Renderer
 
-A work in progress software renderer to render simple models on the CPU\
+A software renderer to render simple models on the CPU\
 Currently renders textured models in orthographic projection
 
 ## Examples
 
-![Destiny Render](https://github.com/nithinrjohn/software-renderer/blob/main/examples/Destiny%20Render.png)
-
 ![Spot Render](https://github.com/nithinrjohn/software-renderer/blob/main/examples/Spot%20Render.png)
+
+![Destiny Render](https://github.com/nithinrjohn/software-renderer/blob/main/examples/Destiny%20Render.png)
 
 More examples: https://github.com/nithinrjohn/software-renderer/tree/main/examples
 
